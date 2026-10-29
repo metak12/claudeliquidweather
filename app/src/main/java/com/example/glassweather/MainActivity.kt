@@ -6,6 +6,7 @@ import android.view.Gravity
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 
@@ -21,7 +22,7 @@ class MainActivity : Activity() {
             setPadding(pad, pad, pad, pad)
         }
         root.addView(TextView(this).apply {
-            text = "Укажите город для виджета, затем добавьте виджет «Glass Погода» на рабочий стол."
+            text = "Укажите город для виджета (запасной источник), затем добавьте виджет «Glass Погода» на рабочий стол."
             textSize = 16f
         })
         val input = EditText(this).apply {
@@ -38,6 +39,16 @@ class MainActivity : Activity() {
                 Toast.makeText(this@MainActivity, "Сохранено", Toast.LENGTH_SHORT).show()
             }
         })
+
+        val result = TextView(this).apply {
+            textSize = 13f
+            setTextIsSelectable(true)
+        }
+        root.addView(Button(this).apply {
+            text = "Проверить Xiaomi"
+            setOnClickListener { result.text = XiaomiWeather.dump(this@MainActivity) }
+        })
+        root.addView(ScrollView(this).apply { addView(result) })
         setContentView(root)
     }
 }

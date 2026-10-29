@@ -17,24 +17,32 @@ class WeatherWidget : AppWidgetProvider() {
             try {
                 val prefs = context.getSharedPreferences("cfg", Context.MODE_PRIVATE)
                 val city = prefs.getString("city", "Курчатов") ?: "Курчатов"
-                val data = try {
-                    WeatherApi.load(city)
-                } catch (e: Exception) {
-                    null
-                }
+                val data = try { WeatherApi.load(city) } catch (e: Exception) { null }
+
+                // данные приложения погоды Xiaomi (если доступны)
+                val x = XiaomiWeather.read(context)
+                val xTemp = x?.let { XiaomiWeather.number(XiaomiWeather.pick(it, "temperature", "temp", "current_temp")) }
+                val xDesc = x?.let { XiaomiWeather.pick(it, "description", "weather_desc", "weather_name") }
+                val xCity = x?.let { XiaomiWeather.pick(it, "city_name", "city") }
+
                 for (id in ids) {
                     val views = RemoteViews(context.packageName, R.layout.widget_weather)
                     if (data != null) {
-                        views.setTextViewText(R.id.city, data.city)
-                        views.setTextViewText(R.id.desc, data.description)
+                        views.setTextViewText(R.id.city, xCity ?: data.city)
+                        views.setTextViewText(R.id.desc, xDesc ?: data.description)
                         views.setTextViewText(R.id.icon, data.emoji)
-                        views.setTextViewText(R.id.temp, "${data.temp}°")
+                        views.setTextViewText(R.id.temp, "${xTemp ?: data.temp}°")
                         views.setTextViewText(R.id.minmax, "Макс. ${data.max}° Мин. ${data.min}°")
                         views.setTextViewText(R.id.aqi, data.aqiText)
+                    } else if (xTemp != null) {
+                        views.setTextViewText(R.id.city, xCity ?: city)
+                        views.setTextViewText(R.id.desc, xDesc ?: "")
+                        views.setTextViewText(R.id.temp, "$xTemp°")
+                        views.setTextViewText(R.id.minmax, "")
+                        views.setTextViewText(R.id.aqi, "")
                     } else {
                         views.setTextViewText(R.id.desc, "Нет данных")
                     }
-                    // тап по виджету — обновить
                     val intent = Intent(context, WeatherWidget::class.java).apply {
                         action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
                         putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, intArrayOf(id))
