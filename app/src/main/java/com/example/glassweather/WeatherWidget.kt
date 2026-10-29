@@ -51,7 +51,19 @@ class WeatherWidget : AppWidgetProvider() {
                         context, id, intent,
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                     )
-                    views.setOnClickPendingIntent(R.id.root, pi)
+                    // тап по иконке — обновить данные
+                    views.setOnClickPendingIntent(R.id.icon, pi)
+                    // тап по виджету — открыть приложение погоды Xiaomi
+                    val launch = context.packageManager.getLaunchIntentForPackage("com.miui.weather2")
+                    if (launch != null) {
+                        val open = PendingIntent.getActivity(
+                            context, id + 100000, launch,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                        )
+                        views.setOnClickPendingIntent(R.id.root, open)
+                    } else {
+                        views.setOnClickPendingIntent(R.id.root, pi)
+                    }
                     manager.updateAppWidget(id, views)
                 }
             } finally {
