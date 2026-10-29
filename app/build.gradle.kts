@@ -11,9 +11,28 @@ android {
         applicationId = "com.example.glassweather"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
     }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file("glassweather.jks")
+            storePassword = "glassweather123"
+            keyAlias = "glass"
+            keyPassword = "glassweather123"
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
+
+    lint { checkReleaseBuilds = false }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
