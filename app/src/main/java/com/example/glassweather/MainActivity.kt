@@ -9,6 +9,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import kotlin.concurrent.thread
 
 class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,7 +23,7 @@ class MainActivity : Activity() {
             setPadding(pad, pad, pad, pad)
         }
         root.addView(TextView(this).apply {
-            text = "Укажите город для виджета (запасной источник), затем добавьте виджет «Glass Погода» на рабочий стол."
+            text = "Укажите город для виджета, затем добавьте виджет «Glass Погода» на рабочий стол."
             textSize = 16f
         })
         val input = EditText(this).apply {
@@ -31,19 +32,26 @@ class MainActivity : Activity() {
             setSingleLine()
         }
         root.addView(input)
-        root.addView(Button(this).apply {
-            text = "Сохранить"
-            setOnClickListener {
-                prefs.edit().putString("city", input.text.toString().trim()).apply()
-                WeatherWidget.refreshAll(this@MainActivity)
-                Toast.makeText(this@MainActivity, "Сохранено", Toast.LENGTH_SHORT).show()
-            }
-        })
 
         val result = TextView(this).apply {
             textSize = 13f
             setTextIsSelectable(true)
         }
+
+        root.addView(Button(this).apply {
+            text = "Сохранить и проверить город"
+            setOnClickListener {
+                val city = input.text.toString().trim()
+                prefs.edit().putString("city", city).apply()
+                WeatherWidget.refreshAll(this@MainActivity)
+                result.text = "Ищу…"
+                thread {
+                    val place = WeatherApi.findPlace(city)
+                    runOnUiThread { result.text = "Найдено: $place" }
+                }
+                Toast.makeText(this@MainActivity, "Сохранено", Toast.LENGTH_SHORT).show()
+            }
+        })
         root.addView(Button(this).apply {
             text = "Проверить Xiaomi"
             setOnClickListener { result.text = XiaomiWeather.dump(this@MainActivity) }

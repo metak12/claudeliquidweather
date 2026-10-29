@@ -29,11 +29,31 @@ object WeatherApi {
         }
     }
 
-    fun load(cityQuery: String): WeatherData {
-        val geo = get(
+    /** Ищет город; из нескольких одноимённых предпочитает российский. */
+    private fun geocode(query: String): JSONObject {
+        val results = get(
             "https://geocoding-api.open-meteo.com/v1/search?name=" +
-                URLEncoder.encode(cityQuery, "UTF-8") + "&count=1&language=ru"
-        ).getJSONArray("results").getJSONObject(0)
+                URLEncoder.encode(query, "UTF-8") + "&count=10&language=ru"
+        ).getJSONArray("results")
+        for (i in 0 until results.length()) {
+            val r = results.getJSONObject(i)
+            if (r.optString("country_code") == "RU") return r
+        }
+        return results.getJSONObject(0)
+    }
+
+    /** Подпись найденного места для проверки в приложении. */
+    fun findPlace(query: String): String = try {
+        val g = geocode(query)
+        listOf(g.optString("name"), g.optString("admin1"), g.optString("country"))
+            .filter { it.isNotBlank() }
+            .joinToString(", ") + " (${g.getDouble("latitude")}, ${g.getDouble("longitude")})"
+    } catch (e: Exception) {
+        "Город не найден или нет сети"
+    }
+
+    fun load(cityQuery: String): WeatherData {
+        val geo = geocode(cityQuery)
         val lat = geo.getDouble("latitude")
         val lon = geo.getDouble("longitude")
         val cityName = geo.getString("name")
